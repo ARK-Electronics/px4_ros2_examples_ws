@@ -1,0 +1,6 @@
+[submodule "src/px4_msgs"]
+	path = src/px4_msgs
+	url = https://github.com/PX4/px4_msgs.git
+[submodule "src/px4-ros2"]
+	path = src/px4-ros2
+	url = https://github.com/ARK-Electronics/px4-ros2.git
