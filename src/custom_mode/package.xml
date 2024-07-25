@@ -4,7 +4,7 @@
   <name>custom_mode</name>
   <version>0.0.1</version>
   <description>Precision Landing</description>
-  <maintainer email="patrik@arkelectron.com">Jacob Dahl</maintainer>
+  <maintainer email="patrik@arkelectron.com">Patrik Dominik Pordi</maintainer>
   <license>BSD-3-Clause</license>
 
   <buildtool_depend>eigen3_cmake_module</buildtool_depend>

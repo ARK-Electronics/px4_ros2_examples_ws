@@ -1,26 +1,31 @@
-# pull in some Python launch modules.
+# Import necessary modules from the launch and launch_ros packages
 from launch import LaunchDescription
 from launch_ros.actions import Node
-from launch.substitutions import PathJoinSubstitution
-from launch_ros.substitutions import FindPackageShare
-from launch.substitutions import LaunchConfiguration
 from launch.actions import DeclareLaunchArgument
-# This function is needed
+from launch.substitutions import LaunchConfiguration
+
+# This function generates the launch description
 def generate_launch_description():
     ld = LaunchDescription()
 
+    # Declare the launch argument
+    trajectory_type_arg = DeclareLaunchArgument(
+        'trajectory_type',
+        default_value='circle',
+        description='Type of trajectory for the custom mode'
+    )
 
-    # C++ nodes
-    precision_land_cpp = Node(
+    # C++ node for custom mode
+    custom_mode_cpp = Node(
         package="custom_mode",
         executable="custom_mode",
         parameters=[
-                {"trajectory_type": "figure_8"},
-            ]
+            {"trajectory_type": LaunchConfiguration('trajectory_type')}
+        ]
     )
 
-
-    ld.add_action(precision_land_cpp)
-
+    # Add the argument and the node action to the launch description
+    ld.add_action(trajectory_type_arg)
+    ld.add_action(custom_mode_cpp)
 
     return ld

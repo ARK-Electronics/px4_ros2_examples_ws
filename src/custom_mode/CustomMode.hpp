@@ -20,56 +20,134 @@
 #include <geometry_msgs/msg/quaternion.hpp>
 #include <vector>
 
-class PrecisionLand : public px4_ros2::ModeBase
+/**
+ * @brief A custom mode class that demonstrates how to create a custom mode in PX4 ROS2
+ * 
+ */
+class CustomMode : public px4_ros2::ModeBase
 {
 public:
-	explicit PrecisionLand(rclcpp::Node& node);
+	/**
+	 * @brief Construct a new Custom Mode object
+	 * 
+	 * @param node The ROS2 node
+	 */
+	explicit CustomMode(rclcpp::Node& node);
 
-	// Callbacks
+	/**
+	 * @brief Callback for the vehicle_land_detected topic
+	 * 
+	 * @param msg The message
+	 */
 	void vehicleLandDetectedCallback(const px4_msgs::msg::VehicleLandDetected::SharedPtr msg);
 
-	// See ModeBasep
+	/**
+	 * @brief Called when the mode is activated
+	 * 
+	 */
 	void onActivate() override;
+
+	/**
+	 * @brief Called when the mode is deactivated
+	 * 
+	 */
 	void onDeactivate() override;
+
+	/**
+	 * @brief Update the setpoint
+	 * 
+	 * @param dt_s The time step
+	 */
 	void updateSetpoint(float dt_s) override;
 
 private:
+	/**
+	 * @brief Check if the drone has reached the target position
+	 * 
+	 * @param target The target position
+	 * @return true if the drone has reached the target position
+	 * @return false if the drone has not reached the target position
+	 */
 	bool positionReached(const Eigen::Vector3f& target) const;
 
+	
+	/**
+	 * @brief Enum class for the state machine
+	 * 
+	 */
 	enum class State {
-		Home,
+		Home,		// Returns to the X,Y position where the drone was armed
 		Execute, 	// Executes the chosen pattern
-		Descend, 	// Stay over landing target while descending
+		Descend, 	// Lands the drone
 		Finished
 	};
 
+	/**
+	 * @brief Switch to a new state
+	 * 
+	 * @param state The new state
+	 */
 	void switchToState(State state);
+	/**
+	 * @brief Get the name of the state
+	 * 
+	 * @param state The state
+	 * @return std::string The name of the state
+	 */
 	std::string stateName(State state);
 
-	// ros2
+	/**
+	 * @brief The ROS2 node
+	 * 
+	 */
 	rclcpp::Node& _node;
 
+	/**
+	 * @brief The subscription to the vehicle_land_detected topic
+	 * 
+	 */
 	rclcpp::Subscription<px4_msgs::msg::VehicleLandDetected>::SharedPtr _vehicle_land_detected_sub;
 
-	// px4_ros2_cpp
+	/**
+	 * @brief The vehicle local position
+	 * 
+	 */
 	std::shared_ptr<px4_ros2::OdometryLocalPosition> _vehicle_local_position;
-	std::shared_ptr<px4_ros2::OdometryAttitude> _vehicle_attitude;
+	/**
+	 * @brief The trajectory setpoint
+	 * 
+	 */
 	std::shared_ptr<px4_ros2::TrajectorySetpointType> _trajectory_setpoint;
 
-	// Data
+	/**
+	 * @brief The current state
+	 * 
+	 */
 	State _state = State::Execute;
-	Eigen::Vector3f _target_position = { NAN, NAN, NAN};
-	float _approach_altitude = {};
 
-
-	// Trajectory type parameter
+	/**
+	 * @brief Trajectory type parameter
+	 * 
+	 */
 	std::string _trajectory_type;
-	// Waypoints for Search pattern
+	/**
+	 * @brief Waypoints for the search pattern
+	 * 
+	 */
 	std::vector<Eigen::Vector3f> _waypoints;
-	// Search pattern generation using trajectory type
+	/**
+	 * @brief Generate waypoints for the pattern
+	 * 
+	 */
 	void generateWaypoints();
-	// Search pattern index
+	/**
+	 * @brief The current waypoint index
+	 * 
+	 */
 	int _waypoint_index = 0;
-	// Land detection
+	/**
+	 * @brief The landing status
+	 * 
+	 */
 	bool _land_detected = false;
 };

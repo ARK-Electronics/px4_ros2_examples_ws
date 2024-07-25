@@ -10,83 +10,63 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
+// Constants
 static const std::string kModeName = "CustomMode";
 static const bool kEnableDebugOutput = true;
 
 using namespace px4_ros2::literals;
 
-PrecisionLand::PrecisionLand(rclcpp::Node& node)
+// Constructor for the CustomMode class
+CustomMode::CustomMode(rclcpp::Node& node)
 	: ModeBase(node, kModeName)
 	, _node(node)
 {
-
+	// Initialize the trajectory setpoint and odometry local position
 	_trajectory_setpoint = std::make_shared<px4_ros2::TrajectorySetpointType>(*this);
-
 	_vehicle_local_position = std::make_shared<px4_ros2::OdometryLocalPosition>(*this);
-
-	_vehicle_attitude = std::make_shared<px4_ros2::OdometryAttitude>(*this);
 
 	// Subscribe to vehicle_land_detected
 	_vehicle_land_detected_sub = _node.create_subscription<px4_msgs::msg::VehicleLandDetected>("/fmu/out/vehicle_land_detected",
-			   rclcpp::QoS(1).best_effort(), std::bind(&PrecisionLand::vehicleLandDetectedCallback, this, std::placeholders::_1));
+			   rclcpp::QoS(1).best_effort(), std::bind(&CustomMode::vehicleLandDetectedCallback, this, std::placeholders::_1));
 	// Declare the trajectory type parameter with a default value of "circle"
 	_node.declare_parameter("trajectory_type", "circle");
 	_node.get_parameter("trajectory_type", _trajectory_type);
 	
 }
 
-void PrecisionLand::vehicleLandDetectedCallback(const px4_msgs::msg::VehicleLandDetected::SharedPtr msg)
+void CustomMode::vehicleLandDetectedCallback(const px4_msgs::msg::VehicleLandDetected::SharedPtr msg)
 {
 	_land_detected = msg->landed;
 }
 
-void PrecisionLand::onActivate()
+// OnActivate function generates waypoints and switches to the Execute state
+void CustomMode::onActivate()
 {
 	generateWaypoints();
 	switchToState(State::Execute);
 }
-
-void PrecisionLand::onDeactivate()
+// OnDeactivate function logs a message when the mode is deactivated
+void CustomMode::onDeactivate()
 {
 	RCLCPP_INFO(_node.get_logger(), "Deactivating CustomMode");
 }
 
-void PrecisionLand::updateSetpoint(float dt_s)
+// UpdateSetpoint function updates the setpoint based on the current state
+void CustomMode::updateSetpoint(float dt_s)
 {
 	
-
+	// Switching between states
 	switch (_state) {
-	case State::Home: {
-		// Go home and land
-		Eigen::Vector3f target_position = { 0.0f, 0.0f, _vehicle_local_position->positionNed().z()};
-
-		px4_msgs::msg::TrajectorySetpoint setpoint;
-
-		setpoint.timestamp = _node.now().nanoseconds() / 1000;
-		setpoint.position = { target_position.x(), target_position.y(), target_position.z() };
-		setpoint.velocity = { NAN, NAN, NAN };
-		setpoint.acceleration = { NAN, NAN, NAN };
-		setpoint.jerk = { NAN, NAN, NAN };
-		setpoint.yaw = NAN;
-		setpoint.yawspeed = NAN;
-		// Publish the trajectory setpoint
-		_trajectory_setpoint->update(setpoint);
-
-		if (positionReached(target_position)) {
-			switchToState(State::Descend);
-		}
-
-		break;
-
-	}
+	// Execute state is the main state where the drone follows the waypoints
 	case State::Execute: {
 
 		// Get the next waypoint
 		Eigen::Vector3f target_position = _waypoints[_waypoint_index];
 
+		// Create a trajectory setpoint message
 		px4_msgs::msg::TrajectorySetpoint setpoint;
 
-		// Go to the next waypoint
+		// Construct the trajectory setpoint message
 		setpoint.timestamp = _node.now().nanoseconds() / 1000;
 		setpoint.position = { target_position.x(), target_position.y(), target_position.z() };
 		setpoint.velocity = { NAN, NAN, NAN };
@@ -94,12 +74,14 @@ void PrecisionLand::updateSetpoint(float dt_s)
 		setpoint.jerk = { NAN, NAN, NAN };
 		setpoint.yaw = NAN;
 		setpoint.yawspeed = NAN;
+
 		// Publish the trajectory setpoint
 		_trajectory_setpoint->update(setpoint);
 
 
 		// Check if the drone has reached the target position
 		if (positionReached(target_position)) {
+			// Move to the next waypoint
 			_waypoint_index++;
 
 			// If we have Executeed all waypoints, go home
@@ -111,15 +93,41 @@ void PrecisionLand::updateSetpoint(float dt_s)
 
 		break;
 	}
+	// Home state is the state where the drone returns to the X,Y position where the drone was armed
+	case State::Home: {
+		// Set the target position to the X,Y position where the drone was armed
+		Eigen::Vector3f target_position = { 0.0f, 0.0f, _vehicle_local_position->positionNed().z()};
+		// Create a trajectory setpoint message
+		px4_msgs::msg::TrajectorySetpoint setpoint;
+		// Construct the trajectory setpoint message
+		setpoint.timestamp = _node.now().nanoseconds() / 1000;
+		setpoint.position = { target_position.x(), target_position.y(), target_position.z() };
+		setpoint.velocity = { NAN, NAN, NAN };
+		setpoint.acceleration = { NAN, NAN, NAN };
+		setpoint.jerk = { NAN, NAN, NAN };
+		setpoint.yaw = NAN;
+		setpoint.yawspeed = NAN;
+		// Publish the trajectory setpoint
+		_trajectory_setpoint->update(setpoint);
+		// Check if the drone has reached the target position
+		if (positionReached(target_position)) {
+			// Switch to state Descend
+			switchToState(State::Descend);
+		}
 
+		break;
+
+	}
 	
 
+	
+	// Descend state is the state where the drone lands
 	case State::Descend: {
 
-	
+		// Create a trajectory setpoint message
 		px4_msgs::msg::TrajectorySetpoint setpoint;
 
-		// This works
+		// Construct the trajectory setpoint message
 		setpoint.timestamp = _node.now().nanoseconds() / 1000;
 		setpoint.position = {0.0, 0.0, NAN};
 		setpoint.velocity = {NAN, NAN, 0.35};
@@ -127,27 +135,18 @@ void PrecisionLand::updateSetpoint(float dt_s)
 		setpoint.jerk = {NAN, NAN, NAN};
 		setpoint.yaw = NAN;
 		setpoint.yawspeed = NAN;
-
-		//This does not work
-		// setpoint.timestamp = _node.now().nanoseconds() / 1000;
-		// setpoint.position = {NAN, NAN, NAN};
-		// setpoint.velocity = {NAN, NAN, 0.35};
-		// setpoint.acceleration = {NAN, NAN, NAN};
-		// setpoint.jerk = {NAN, NAN, NAN};
-		// setpoint.yaw = NAN;
-		// setpoint.yawspeed = NAN;
-
 	
-
+		// Publish the trajectory setpoint
 		_trajectory_setpoint->update(setpoint);
-
+		// Check if the drone has landed
 		if (_land_detected) {
+			// Switch to state Finished
 			switchToState(State::Finished);
 		}
 
 		break;
 	}
-
+	// Finished state is the state where the mode is completed
 	case State::Finished: {
 		ModeBase::completed(px4_ros2::Result::Success);
 		break;
@@ -155,67 +154,63 @@ void PrecisionLand::updateSetpoint(float dt_s)
 	} // end switch/case
 }
 
-void PrecisionLand::generateWaypoints()
+// GenerateWaypoints function generates waypoints based on the trajectory type
+void CustomMode::generateWaypoints()
 {
-	// Generate spiral Execute waypoints
-	// The Execute waypoints are generated in the NED frame
-	// Parameters for the Execute pattern
+	// Set the start position
 	double start_x = 0.0;
 	double start_y = 0.0;
 	double current_z = _vehicle_local_position->positionNed().z();
 	
-
+	// Set the maximum radius and number of points
 	double max_radius = 3.0;
 	int points = 16;
+	// Create a vector to store the waypoints
 	std::vector<Eigen::Vector3f> waypoints;
 
-	// Generate waypoints
-
-	// Generate waypoints
-	// if the trajectory type is "spiral", generate spiral waypoints
-	if (_trajectory_type == "spiral") {
-		// Generate spiral waypoints
-		// The spiral waypoints are generated in the NED frame
-		// Parameters for the spiral pattern
-		double radius = 0.0;
-
-		for (int point = 0; point < points + 1; ++point) {
-			double angle = 2.0 * M_PI * point / points;
-			double x = start_x + radius * cos(angle);
-			double y = start_y + radius * sin(angle);
-			double z = current_z;
-
-			waypoints.push_back(Eigen::Vector3f(x, y, z));
-			radius += max_radius / points;
-		}
-
-		
-	}
 	// Trajectory type circle
-	else if (_trajectory_type == "circle") {
-		// Generate circle waypoints
-		// The circle waypoints are generated in the NED frame
+	if (_trajectory_type == "circle") {
 		// Parameters for the circle pattern
 		double angle_increment = 2.0 * M_PI / points;
 
+		// Generate circle waypoints
+		// The circle waypoints are generated in the NED frame
 		for (int point = 0; point < points; ++point) {
 			double angle = angle_increment * point;
 			double x = start_x + max_radius * cos(angle);
 			double y = start_y + max_radius * sin(angle);
 			double z = current_z;
-
+			// Push the waypoints to the vector
 			waypoints.push_back(Eigen::Vector3f(x, y, z));
 		}
 
 	}
-	// If trajectory type is figure 8
+	// Trajectory type spiral
+	else if (_trajectory_type == "spiral") {
+		
+		// Parameters for the spiral pattern
+		double radius = 0.0;
+		// Generate spiral waypoints
+		// The spiral waypoints are generated in the NED frame
+		for (int point = 0; point < points + 1; ++point) {
+			double angle = 2.0 * M_PI * point / points;
+			double x = start_x + radius * cos(angle);
+			double y = start_y + radius * sin(angle);
+			double z = current_z;
+			// Push the waypoints to the vector
+			waypoints.push_back(Eigen::Vector3f(x, y, z));
+			// Increase the radius
+			radius += max_radius / points;
+		}
+
+		
+	}
+	// Trajectory type figure 8`
 	else if (_trajectory_type == "figure_8") {
+		// Parameters for the figure 8 pattern
+    	double angle_increment = 2.0 * M_PI / points;
 		// Generate figure 8 waypoints
 		// The figure 8 waypoints are generated in the NED frame
-		// Parameters for the figure 8 pattern
-		    // Parameters for the figure 8 pattern
-    	double angle_increment = 2.0 * M_PI / points;
-
     	for (int point = 0; point < points; ++point) {
 			double angle = angle_increment * point;
 
@@ -223,33 +218,32 @@ void PrecisionLand::generateWaypoints()
 			double x = start_x + max_radius * sin(angle);
 			double y = start_y + max_radius * sin(2 * angle);
 			double z = current_z;  // Assuming constant z
-
+			// Push the waypoints to the vector
 			waypoints.push_back(Eigen::Vector3f(x, y, z));
-    }
-
-		// Set the Execute waypoints
-		_waypoints = waypoints;
+    	}
 	}
 
 	// Set the Execute waypoints
 	_waypoints = waypoints;
 }
-
-bool PrecisionLand::positionReached(const Eigen::Vector3f& target) const
+// PositionReached function checks if the drone has reached the target position
+bool CustomMode::positionReached(const Eigen::Vector3f& target) const
 {
-	// TODO: parameters for delta_position and delta_velocitry
+	// Define the position and velocity thresholds
 	static constexpr float kDeltaPosition = 0.25f;
 	static constexpr float kDeltaVelocity = 0.25f;
 
+	// Get the current position and velocity
 	auto position = _vehicle_local_position->positionNed();
 	auto velocity = _vehicle_local_position->velocityNed();
 
+	// Calculate the delta position and velocity
 	const auto delta_pos = target - position;
-	// NOTE: this does NOT handle a moving target!
+	
 	return (delta_pos.norm() < kDeltaPosition) && (velocity.norm() < kDeltaVelocity);
 }
-
-std::string PrecisionLand::stateName(State state)
+// StateName function returns the name of the state
+std::string CustomMode::stateName(State state)
 {
 	switch (state) {
 	case State::Home:
@@ -264,17 +258,19 @@ std::string PrecisionLand::stateName(State state)
 		return "Unknown";
 	}
 }
-
-void PrecisionLand::switchToState(State state)
+// SwitchToState function switches to the specified state
+void CustomMode::switchToState(State state)
 {
 	RCLCPP_INFO(_node.get_logger(), "Switching to %s", stateName(state).c_str());
 	_state = state;
 }
 
+// Main function
 int main(int argc, char* argv[])
 {
+	// Initialize the ROS2 node
 	rclcpp::init(argc, argv);
-	rclcpp::spin(std::make_shared<px4_ros2::NodeWithMode<PrecisionLand>>(kModeName, kEnableDebugOutput));
+	rclcpp::spin(std::make_shared<px4_ros2::NodeWithMode<CustomMode>>(kModeName, kEnableDebugOutput));
 	rclcpp::shutdown();
 	return 0;
 }
