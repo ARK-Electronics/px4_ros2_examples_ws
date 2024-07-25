@@ -1,62 +1,110 @@
-# ROS2 workspace for PX4
+# ROS2 & PX4 CustomMode example
+This tutorial is a example on how to utilize custom modes in PX4 using ROS2 and QGC. We would like to provide you with a basic example code that you can customize and utilize for your application.
 
-## Pre-requisites
-```
-git submodule update --init --recursive
-rosdep install -r --from-paths src -i -y --rosdistro humble
-colcon build
-```
+This project is a customized example of the usage of the Auterions PX4-ROS2 Interface Library
 
-```
-sudo apt-get install -y \
-	ros-humble-usb-cam \
-	ros-humble-image-view \
-	ros-humble-camera-calibration \
-	ros-humble-camera-calibration-parsers
+https://github.com/Auterion/px4-ros2-interface-lib
 
-```
+### Prerequisites
+* Ubuntu 22.04
+* ROS2 Humble
+* PX4 Autopilot
+* Micro XRCE-DDS Agent
+* QGroundControl Daily Build 
+
+You can find the required instructions collected below
+
+https://docs.px4.io/main/en/ros2/user_guide.html
+
+
+https://docs.qgroundcontrol.com/master/en/qgc-user-guide/releases/daily_builds.html
+
 
 ## Usage
 
-USB camera node
+### Setup the Workspace
+Navigate to the directory you would like to place the worskpace and then run the following
 ```
-ros2 run usb_cam usb_cam_node_exe --ros-args -p video_device:=/dev/video2 -p camera_info_url:=/home/jake/Downloads/fisheye_calibration.ini
+git clone https://github.com/ARK-Electronics/px4_ros2_examples_ws
 ```
-View the image
+Then navigate into the workspace:
 ```
-ros2 run image_view image_view --ros-args -r image:=/image_proc
+cd /px4_ros2_examples_ws
 ```
-
-Bridge camera from gz to ros2
-
-Install the proper version for humble + garden
+Install the submoduls
 ```
-sudo apt install ros-humble-ros-gzgarden-bridge
+git submodule update --init --recursive
 ```
-Run
-
+Build the workspace
 ```
-ros2 run ros_gz_bridge parameter_bridge /camera@sensor_msgs/msg/Image@gz.msgs.Image
+colcon build
 ```
-
-## Camera calibration
-- fisheye calibration
-- https://docs.ros.org/en/rolling/p/camera_calibration/tutorial_mono.html
-USB camera
-https://www.amazon.com/gp/product/B0829HZ3Q7/ref=ppx_yo_dt_b_search_asin_title?ie=UTF8&psc=1
+Source the workspace
 ```
-ros2 run usb_cam usb_cam_node_exe --ros-args -p video_device:=/dev/video2
-```
-```
-ros2 run camera_calibration cameracalibrator --size 7x9 --square 0.015 --ros-args -r image:=/image_raw
+source install/setup.bash 
 ```
 
-bridge camera from gz to ros2
+### Run the example
+
+#### Run the simulation environment
+
 ```
-ros2 run ros_gz_bridge parameter_bridge /camera@sensor_msgs/msg/Image@gz.msgs.Image
+cd PX4-Autopilot/
+make px4_sitl_default gz_x500
 ```
 
-Run this before build ros_gz from source
+#### Run the Micro XRCE-DDS Agent for the communication stream
 ```
-export GZ_VERSION=garden
+MicroXRCEAgent udp4 -p 8888
 ```
+
+#### Run QGC Daily build
+Navigate to the directory
+```
+./QGroundControl.AppImage
+```
+Take off with the drone using the GUI
+
+#### Launch your custom mode
+I created a launch file that you can use. It currently contains only one node, so it might seem limited, but you can expand on it. The file includes three basic patterns: circle, spiral, and figure-8. These are ROS2 parameters that you can set either directly in the launch file or via command line arguments. If no pattern is specified, the default is circle.
+
+```
+cd px4_ros2_examples_ws/
+source install/setup.bash 
+```
+AND
+```
+ros2 run custom_mode custom_mode
+```
+OR
+```
+ros2 launch custom_mode custom_mode.launch.py
+```
+OR
+```
+ros2 launch custom_mode custom_mode.launch.py trajectory_type:=spiral
+```
+OR
+```
+ros2 run custom_mode custom_mode --ros-args -p trajectory_type:=figure_8
+
+```
+
+#### Start it from QGC
+You can just start the custom node from the GUI or you can also map it to your remote control
+
+#### Closing remarks
+ONce you are done do not forget to close all your terminals
+
+## Video
+
+## ARK Electronics
+For more open-source drone-related material, follow us on LinkedIn and Twitter:
+
+[LinkedIn](https://www.linkedin.com/company/ark-electronics-llc/)
+
+[X](https://x.com/ark_electr0nics)
+
+If you're interested in US-manufactured drone hardware, please visit our webpage:
+
+[ARK Electronics](https://arkelectron.com/)
