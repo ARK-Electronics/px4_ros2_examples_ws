@@ -58,7 +58,7 @@ private:
 	rclcpp::Node& _node;
 
 	// Subscription to the vehicle_land_detected topic
-	rclcpp::Subscription<px4_msgs::msg::VehicleLandDetected>::SharedPtr_vehicle_land_detected_sub;
+	rclcpp::Subscription<px4_msgs::msg::VehicleLandDetected>::SharedPtr _vehicle_land_detected_sub;
 
 	// PX4 ROS2 OdometryAttitude and OdometryLocalPosition instances
 	std::shared_ptr<px4_ros2::OdometryLocalPosition> _vehicle_local_position;

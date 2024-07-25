@@ -27,8 +27,7 @@ CustomMode::CustomMode(rclcpp::Node& node)
 		std::make_shared<px4_ros2::OdometryLocalPosition>(*this);
 
 	// Subscribe to vehicle_land_detected
-	_vehicle_land_detected_sub =
-		_node.create_subscription<px4_msgs::msg::VehicleLandDetected>(
+	_vehicle_land_detected_sub =_node.create_subscription<px4_msgs::msg::VehicleLandDetected>(
 			"/fmu/out/vehicle_land_detected", rclcpp::QoS(1).best_effort(),
 			std::bind(&CustomMode::vehicleLandDetectedCallback, this,
 				  std::placeholders::_1));
