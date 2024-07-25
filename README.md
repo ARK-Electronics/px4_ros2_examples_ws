@@ -25,11 +25,11 @@ https://docs.qgroundcontrol.com/master/en/qgc-user-guide/releases/daily_builds.h
 ### Setup the Workspace
 Navigate to the directory you would like to place the worskpace and then run the following
 ```
-git clone https://github.com/ARK-Electronics/ros2_desktop_ws
+git clone https://github.com/ARK-Electronics/px4_ros2_examples_ws
 ```
 Then navigate into the workspace:
 ```
-cd /ros2_desktop_ws
+cd /px4_ros2_examples_ws
 ```
 Install the submoduls
 ```
@@ -69,7 +69,7 @@ Take off with the drone using the GUI
 I created a launch file that you can use. It currently contains only one node, so it might seem limited, but you can expand on it. The file includes three basic patterns: circle, spiral, and figure-8. These are ROS2 parameters that you can set either directly in the launch file or via command line arguments. If no pattern is specified, the default is circle.
 
 ```
-cd ros2_desktop_ws/
+cd px4_ros2_examples_ws/
 source install/setup.bash 
 ```
 AND

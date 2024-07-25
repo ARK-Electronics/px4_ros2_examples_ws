@@ -17,38 +17,33 @@ static const bool kEnableDebugOutput = true;
 using namespace px4_ros2::literals;
 
 // Constructor for the CustomMode class
-CustomMode::CustomMode(rclcpp::Node& node)
-	: ModeBase(node, kModeName), _node(node)
+CustomMode::CustomMode(rclcpp::Node& node): ModeBase(node, kModeName), _node(node)
 {
 	// Initialize the trajectory setpoint and odometry local position
-	_trajectory_setpoint =
-		std::make_shared<px4_ros2::TrajectorySetpointType>(*this);
-	_vehicle_local_position =
-		std::make_shared<px4_ros2::OdometryLocalPosition>(*this);
+	_trajectory_setpoint = std::make_shared<px4_ros2::TrajectorySetpointType>(*this);
+	_vehicle_local_position = std::make_shared<px4_ros2::OdometryLocalPosition>(*this);
 
 	// Subscribe to vehicle_land_detected
-	_vehicle_land_detected_sub =_node.create_subscription<px4_msgs::msg::VehicleLandDetected>(
-			"/fmu/out/vehicle_land_detected", rclcpp::QoS(1).best_effort(),
-			std::bind(&CustomMode::vehicleLandDetectedCallback, this,
-				  std::placeholders::_1));
+	_vehicle_land_detected_sub = _node.create_subscription<px4_msgs::msg::VehicleLandDetected>(
+					     "/fmu/out/vehicle_land_detected", rclcpp::QoS(1).best_effort(),
+					     std::bind(&CustomMode::vehicleLandDetectedCallback, this, std::placeholders::_1));
+
 	// Declare the trajectory type parameter with a default value of "circle"
 	_node.declare_parameter("trajectory_type", "circle");
 	_node.get_parameter("trajectory_type", _trajectory_type);
 }
 
-void CustomMode::vehicleLandDetectedCallback(
-	const px4_msgs::msg::VehicleLandDetected::SharedPtr msg)
+void CustomMode::vehicleLandDetectedCallback(const px4_msgs::msg::VehicleLandDetected::SharedPtr msg)
 {
 	_land_detected = msg->landed;
 }
 
-// OnActivate function generates waypoints and switches to the Execute state
 void CustomMode::onActivate()
 {
 	generateWaypoints();
 	switchToState(State::Execute);
 }
-// OnDeactivate function logs a message when the mode is deactivated
+
 void CustomMode::onDeactivate()
 {
 	RCLCPP_INFO(_node.get_logger(), "Deactivating CustomMode");
@@ -88,19 +83,16 @@ void CustomMode::updateSetpoint(float dt_s)
 			// Move to the next waypoint
 			_waypoint_index++;
 
-			// If we have Executeed all waypoints, go home
+			// If we have Executeed all waypoints, go ReturnToHome
 			if (_waypoint_index >= static_cast<int>(_waypoints.size())) {
-				// Switch to state Home
-				switchToState(State::Home);
+				switchToState(State::ReturnToHome);
 			}
 		}
 
 		break;
 	}
 
-	// Home state is the state where the drone returns to the X,Y position where
-	// the drone was armed
-	case State::Home: {
+	case State::ReturnToHome: {
 		// Set the target position to the X,Y position where the drone was armed
 		Eigen::Vector3f target_position = {
 			0.0f, 0.0f, _vehicle_local_position->positionNed().z()
@@ -122,7 +114,6 @@ void CustomMode::updateSetpoint(float dt_s)
 
 		// Check if the drone has reached the target position
 		if (positionReached(target_position)) {
-			// Switch to state Descend
 			switchToState(State::Descend);
 		}
 
@@ -149,7 +140,6 @@ void CustomMode::updateSetpoint(float dt_s)
 
 		// Check if the drone has landed
 		if (_land_detected) {
-			// Switch to state Finished
 			switchToState(State::Finished);
 		}
 
@@ -178,26 +168,8 @@ void CustomMode::generateWaypoints()
 	// Create a vector to store the waypoints
 	std::vector<Eigen::Vector3f> waypoints;
 
-	// Trajectory type circle
-	if (_trajectory_type == "circle") {
-		// Parameters for the circle pattern
-		double angle_increment = 2.0 * M_PI / points;
-
-		// Generate circle waypoints
-		// The circle waypoints are generated in the NED frame
-		for (int point = 0; point < points; ++point) {
-			double angle = angle_increment * point;
-			double x = start_x + max_radius * cos(angle);
-			double y = start_y + max_radius * sin(angle);
-			double z = current_z;
-			// Push the waypoints to the vector
-			waypoints.push_back(Eigen::Vector3f(x, y, z));
-		}
-
-	}
-
 	// Trajectory type spiral
-	else if (_trajectory_type == "spiral") {
+	if (_trajectory_type == "spiral") {
 
 		// Parameters for the spiral pattern
 		double radius = 0.0;
@@ -236,6 +208,24 @@ void CustomMode::generateWaypoints()
 		}
 	}
 
+	// Trajectory type circle
+	else  {
+		// Parameters for the circle pattern
+		double angle_increment = 2.0 * M_PI / points;
+
+		// Generate circle waypoints
+		// The circle waypoints are generated in the NED frame
+		for (int point = 0; point < points; ++point) {
+			double angle = angle_increment * point;
+			double x = start_x + max_radius * cos(angle);
+			double y = start_y + max_radius * sin(angle);
+			double z = current_z;
+			// Push the waypoints to the vector
+			waypoints.push_back(Eigen::Vector3f(x, y, z));
+		}
+
+	}
+
 	// Set the Execute waypoints
 	_waypoints = waypoints;
 }
@@ -250,7 +240,6 @@ bool CustomMode::positionReached(const Eigen::Vector3f& target) const
 	auto position = _vehicle_local_position->positionNed();
 	auto velocity = _vehicle_local_position->velocityNed();
 
-	// Calculate the delta position and velocity
 	const auto delta_pos = target - position;
 
 	return (delta_pos.norm() < kDeltaPosition) &&
@@ -260,8 +249,8 @@ bool CustomMode::positionReached(const Eigen::Vector3f& target) const
 std::string CustomMode::stateName(State state)
 {
 	switch (state) {
-	case State::Home:
-		return "Home";
+	case State::ReturnToHome:
+		return "ReturnToHome";
 
 	case State::Execute:
 		return "Execute";
