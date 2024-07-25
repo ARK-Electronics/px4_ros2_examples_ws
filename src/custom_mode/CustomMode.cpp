@@ -1,8 +1,3 @@
-/****************************************************************************
- * Copyright (c) 2023 PX4 Development Team.
- * SPDX-License-Identifier: BSD-3-Clause
- ****************************************************************************/
-
 #include "CustomMode.hpp"
 
 #include <Eigen/Core>
