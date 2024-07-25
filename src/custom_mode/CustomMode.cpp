@@ -11,7 +11,6 @@ static const bool kEnableDebugOutput = true;
 
 using namespace px4_ros2::literals;
 
-// Constructor for the CustomMode class
 CustomMode::CustomMode(rclcpp::Node& node): ModeBase(node, kModeName), _node(node)
 {
 	// Initialize the trajectory setpoint and odometry local position
@@ -44,22 +43,15 @@ void CustomMode::onDeactivate()
 	RCLCPP_INFO(_node.get_logger(), "Deactivating CustomMode");
 }
 
-// UpdateSetpoint function updates the setpoint based on the current state
 void CustomMode::updateSetpoint(float dt_s)
 {
-
-	// Switching between states
 	switch (_state) {
-	// Execute state is the main state where the drone follows the waypoints
 	case State::Execute: {
-
 		// Get the next waypoint
 		Eigen::Vector3f target_position = _waypoints[_waypoint_index];
 
-		// Create a trajectory setpoint message
+		// Construct a trajectory setpoint message
 		px4_msgs::msg::TrajectorySetpoint setpoint;
-
-		// Construct the trajectory setpoint message
 		setpoint.timestamp = _node.now().nanoseconds() / 1000;
 		setpoint.position = {target_position.x(), target_position.y(),
 				     target_position.z()
@@ -70,10 +62,8 @@ void CustomMode::updateSetpoint(float dt_s)
 		setpoint.yaw = NAN;
 		setpoint.yawspeed = NAN;
 
-		// Publish the trajectory setpoint
 		_trajectory_setpoint->update(setpoint);
 
-		// Check if the drone has reached the target position
 		if (positionReached(target_position)) {
 			// Move to the next waypoint
 			_waypoint_index++;
@@ -92,9 +82,8 @@ void CustomMode::updateSetpoint(float dt_s)
 		Eigen::Vector3f target_position = {
 			0.0f, 0.0f, _vehicle_local_position->positionNed().z()
 		};
-		// Create a trajectory setpoint message
+		// Construct a trajectory setpoint message
 		px4_msgs::msg::TrajectorySetpoint setpoint;
-		// Construct the trajectory setpoint message
 		setpoint.timestamp = _node.now().nanoseconds() / 1000;
 		setpoint.position = {target_position.x(), target_position.y(),
 				     target_position.z()
@@ -104,10 +93,9 @@ void CustomMode::updateSetpoint(float dt_s)
 		setpoint.jerk = {NAN, NAN, NAN};
 		setpoint.yaw = NAN;
 		setpoint.yawspeed = NAN;
-		// Publish the trajectory setpoint
+
 		_trajectory_setpoint->update(setpoint);
 
-		// Check if the drone has reached the target position
 		if (positionReached(target_position)) {
 			switchToState(State::Descend);
 		}
@@ -115,13 +103,9 @@ void CustomMode::updateSetpoint(float dt_s)
 		break;
 	}
 
-	// Descend state is the state where the drone lands
 	case State::Descend: {
-
-		// Create a trajectory setpoint message
+		// Construct a trajectory setpoint message
 		px4_msgs::msg::TrajectorySetpoint setpoint;
-
-		// Construct the trajectory setpoint message
 		setpoint.timestamp = _node.now().nanoseconds() / 1000;
 		setpoint.position = {0.0, 0.0, NAN};
 		setpoint.velocity = {NAN, NAN, 0.35};
@@ -130,10 +114,8 @@ void CustomMode::updateSetpoint(float dt_s)
 		setpoint.yaw = NAN;
 		setpoint.yawspeed = NAN;
 
-		// Publish the trajectory setpoint
 		_trajectory_setpoint->update(setpoint);
 
-		// Check if the drone has landed
 		if (_land_detected) {
 			switchToState(State::Finished);
 		}
@@ -149,7 +131,6 @@ void CustomMode::updateSetpoint(float dt_s)
 	} // end switch/case
 }
 
-// GenerateWaypoints function generates waypoints based on the trajectory type
 void CustomMode::generateWaypoints()
 {
 	// Set the start position
@@ -221,10 +202,9 @@ void CustomMode::generateWaypoints()
 
 	}
 
-	// Set the Execute waypoints
 	_waypoints = waypoints;
 }
-// PositionReached function checks if the drone has reached the target position
+
 bool CustomMode::positionReached(const Eigen::Vector3f& target) const
 {
 	// Define the position and velocity thresholds
@@ -240,7 +220,7 @@ bool CustomMode::positionReached(const Eigen::Vector3f& target) const
 	return (delta_pos.norm() < kDeltaPosition) &&
 	       (velocity.norm() < kDeltaVelocity);
 }
-// StateName function returns the name of the state
+
 std::string CustomMode::stateName(State state)
 {
 	switch (state) {
@@ -260,17 +240,15 @@ std::string CustomMode::stateName(State state)
 		return "Unknown";
 	}
 }
-// SwitchToState function switches to the specified state
+
 void CustomMode::switchToState(State state)
 {
 	RCLCPP_INFO(_node.get_logger(), "Switching to %s", stateName(state).c_str());
 	_state = state;
 }
 
-// Main function
 int main(int argc, char* argv[])
 {
-	// Initialize the ROS2 node
 	rclcpp::init(argc, argv);
 	rclcpp::spin(std::make_shared<px4_ros2::NodeWithMode<CustomMode>>(
 			     kModeName, kEnableDebugOutput));

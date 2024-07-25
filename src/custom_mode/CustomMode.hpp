@@ -8,45 +8,38 @@
 #include <rclcpp/rclcpp.hpp>
 #include <vector>
 
-// CustomMode class definition that inherits from px4_ros2::ModeBase
 class CustomMode : public px4_ros2::ModeBase
 {
 public:
-	// Constructor that takes a reference to a rclcpp::Node
 	explicit CustomMode(rclcpp::Node& node);
 
 	// Callback function for the vehicle_land_detected subscription
 	void vehicleLandDetectedCallback(const px4_msgs::msg::VehicleLandDetected::SharedPtr msg);
 
-	// Activates the mode
+	// Called when the mode is activated
 	void onActivate() override;
-	// Deactivates the mode
+	// Called when the mode is deactivated
 	void onDeactivate() override;
-	// serves as the "main loop" and is called at regular intervals, runs the state machine
+	// Serves as the "main loop" and is called at regular intervals. Runs the state machine.
 	void updateSetpoint(float dt_s) override;
 
 private:
-	// Enum class for the different states of the state machine
 	enum class State {
-		ReturnToHome,    // Returns to the X,Y position where the drone was armed
+		ReturnToHome, // Returns to the X,Y position where the drone was armed
 		Execute, // Executes the chosen pattern
 		Descend, // Lands the drone
 		Finished
 	};
 
-	// Checks if the drone has reached the target position
 	bool positionReached(const Eigen::Vector3f& target) const;
 
-	// Switches to the given state
 	void switchToState(State state);
 
-	// Returns the name of the given state
 	std::string stateName(State state);
 
-	// Waypoint generation function
+	// generates waypoints based on the trajectory type
 	void generateWaypoints();
 
-	// ROS2 node
 	rclcpp::Node& _node;
 
 	// Subscription to the vehicle_land_detected topic
@@ -56,16 +49,11 @@ private:
 	std::shared_ptr<px4_ros2::OdometryLocalPosition> _vehicle_local_position;
 	std::shared_ptr<px4_ros2::TrajectorySetpointType> _trajectory_setpoint;
 
-	// Current state of the state machine
 	State _state = State::Execute;
 
-	// Trajectory type parameter
 	std::string _trajectory_type;
-	// Waypoints for the drone to follow
 	std::vector<Eigen::Vector3f> _waypoints;
-
-	// Waypoint index
 	int _waypoint_index = 0;
-	// Land detected flag
+
 	bool _land_detected = false;
 };
