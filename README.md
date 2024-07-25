@@ -25,23 +25,23 @@ https://docs.qgroundcontrol.com/master/en/qgc-user-guide/releases/daily_builds.h
 ### Setup the Workspace
 Navigate to the directory you would like to place the worskpace and then run the following
 ```
-clone
+git clone https://github.com/ARK-Electronics/ros2_desktop_ws
 ```
 Then navigate into the workspace:
 ```
-cd
+cd /ros2_desktop_ws
 ```
 Install the submoduls
 ```
-init
+git submodule update --init --recursive
 ```
 Build the workspace
 ```
-build
+colcon build
 ```
 Source the workspace
 ```
-source
+source install/setup.bash 
 ```
 
 ### Run the example
@@ -50,7 +50,7 @@ source
 
 ```
 cd PX4-Autopilot/
-make px4_sitl
+make make px4_sitl_default gz_x500_mono_cam_down
 ```
 
 #### Run the Micro XRCE-DDS Agent for the communication stream
@@ -59,15 +59,19 @@ MicroXRCEAgent udp4 -p 8888
 ```
 
 #### Run QGC Daily build
+Navigate to the directory
 ```
-cd run
+./QGroundControl.AppImage
 ```
 Take off with the drone using the GUI
 
 #### Launch your custom mode
 
+
 ```
-instructons here
+cd ros2_desktop_ws/
+source install/setup.bash 
+ros2 launch custom_mode custom_mode.launch.py
 ```
 
 #### Start it from QGC
