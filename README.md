@@ -23,13 +23,24 @@ https://docs.qgroundcontrol.com/master/en/qgc-user-guide/releases/daily_builds.h
 ## Usage
 
 ### Setup the Workspace
+Make sure you source ROS2 Humble in the terminal you are using.
+```
+source /opt/ros/humble/setup.bash
+```
+OR
+Just add the line above to your bashrc, in that case it is going to be sourced every time you open a terminal.
+```
+nano ~/.bashrc
+```
+
+
 Navigate to the directory you would like to place the worskpace and then run the following
 ```
 git clone https://github.com/ARK-Electronics/px4_ros2_examples_ws
 ```
 Then navigate into the workspace:
 ```
-cd /px4_ros2_examples_ws
+cd px4_ros2_examples_ws
 ```
 Install the submoduls
 ```
@@ -108,3 +119,6 @@ For more open-source drone-related material, follow us on LinkedIn and Twitter:
 If you're interested in US-manufactured drone hardware, please visit our webpage:
 
 [ARK Electronics](https://arkelectron.com/)
+
+## Questions
+Message Patrik Dominik Pordi on the Dronecode Foundation Discord for questions or email me at patrik@arkelectron.com
