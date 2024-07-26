@@ -19,6 +19,12 @@ https://docs.px4.io/main/en/ros2/user_guide.html
 
 https://docs.qgroundcontrol.com/master/en/qgc-user-guide/releases/daily_builds.html
 
+You can also have a look on our previous tutorial where the steps above are covered:
+
+https://github.com/ARK-Electronics/ROS2_PX4_Offboard_Example
+
+
+
 
 ## Usage
 
