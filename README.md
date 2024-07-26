@@ -56,6 +56,10 @@ Build the workspace
 ```
 colcon build
 ```
+After this runs, we do not need to build the whole workspace again, you can just build the individual packages you have modified
+```
+colcon build --packages-select custom_mode
+```
 Source the workspace
 ```
 source install/setup.bash 
