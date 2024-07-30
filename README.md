@@ -1,5 +1,5 @@
-# ROS2 & PX4 CustomMode example
-This tutorial is a example on how to utilize custom modes in PX4 using ROS2 and QGC. We would like to provide you with a basic example code that you can customize and utilize for your application.
+# ROS2 & PX4 CustomMode hardware example
+This tutorial is a example on how to utilize custom modes in PX4 using ROS2 and QGC on actual hardware.
 
 This project is a customized example of the usage of the Auterions PX4-ROS2 Interface Library
 
@@ -22,6 +22,10 @@ https://docs.qgroundcontrol.com/master/en/qgc-user-guide/releases/daily_builds.h
 You can also have a look on our previous tutorial where the steps above are covered:
 
 https://github.com/ARK-Electronics/ROS2_PX4_Offboard_Example
+
+#### Software tutorial
+Please refer to our custom_mode tutorial to understand how the code works and also how to use your custom mode in simulation.
+
 
 
 
@@ -65,26 +69,21 @@ Source the workspace
 source install/setup.bash 
 ```
 
+### Map the Custom Mode to your RC in QGC
+
+
 ### Run the example
-
-#### Run the simulation environment
-
-```
-cd PX4-Autopilot/
-make px4_sitl_default gz_x500
-```
-
-#### Run the Micro XRCE-DDS Agent for the communication stream
-```
-MicroXRCEAgent udp4 -p 8888
-```
 
 #### Run QGC Daily build
 Navigate to the directory
 ```
 ./QGroundControl.AppImage
 ```
-Take off with the drone using the GUI
+Take off with the drone
+
+#### Custom Mode Service
+Turn your ROSNode to a service. These instructions should generally work on Ubuntu based microcontrollers. I am usinng Jetson Orin Nano with Jetpack 6. Installed in the ARK Jetson PAB Carrier.
+
 
 #### Launch your custom mode
 I created a launch file that you can use. It currently contains only one node, so it might seem limited, but you can expand on it. The file includes three basic patterns: circle, spiral, and figure-8. These are ROS2 parameters that you can set either directly in the launch file or via command line arguments. If no pattern is specified, the default is circle.
@@ -108,11 +107,12 @@ ros2 launch custom_mode custom_mode.launch.py trajectory_type:=spiral
 OR
 ```
 ros2 run custom_mode custom_mode --ros-args -p trajectory_type:=figure_8
-
 ```
 
+
+
 #### Start it from QGC
-You can just start the custom node from the GUI or you can also map it to your remote control
+You can just start the custom node from the GUI or from your RC.
 
 #### Closing remarks
 ONce you are done do not forget to close all your terminals
