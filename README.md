@@ -132,3 +132,8 @@ If you're interested in US-manufactured drone hardware, please visit our webpage
 
 ## Questions
 Message Patrik Dominik Pordi on the Dronecode Foundation Discord for questions or email me at patrik@arkelectron.com
+
+## Additional resources
+[LinuxCheatSheet](https://www.geeksforgeeks.org/linux-commands-cheat-sheet/)
+[ROS2CheatSheet](https://www.theconstruct.ai/wp-content/uploads/2021/10/ROS2-Command-Cheat-Sheets-updated.pdf)
+[CMakeBasics](https://nu-msr.github.io/navigation_site/lectures/cmake_basics.html)
