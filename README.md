@@ -27,8 +27,6 @@ You can also have a look on our previous tutorial where the steps above are cove
 https://github.com/ARK-Electronics/ROS2_PX4_Offboard_Example
 
 
-
-
 ## Usage
 
 ### Setup the Workspace
@@ -41,7 +39,6 @@ Just add the line above to your bashrc, in that case it is going to be sourced e
 ```
 nano ~/.bashrc
 ```
-
 
 Navigate to the directory you would like to place the worskpace and then run the following
 ```
@@ -71,6 +68,13 @@ source install/setup.bash
 ### Run the example
 
 #### Run the simulation environment
+To ensure message compatibility, make sure you are using the same PX4 version as shown in the video. To do this, follow these steps:
+```
+cd PX4-Autopilot
+git fetch origin
+git checkout 8070c70
+git submodule update --init --recursive
+```
 
 ```
 cd PX4-Autopilot/
