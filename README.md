@@ -6,7 +6,11 @@ This project is a customized example of the usage of the Auterions PX4-ROS2 Inte
 https://github.com/Auterion/px4-ros2-interface-lib
 
 ### Video Walkthrough
+#### Software
 https://youtu.be/L1RO0oUdzqI
+#### Hardware
+https://www.youtube.com/watch?v=Sw24kesfpLw
+
 
 ### Prerequisites
 * Ubuntu 22.04
