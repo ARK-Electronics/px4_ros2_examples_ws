@@ -51,16 +51,11 @@ void CustomMode::updateSetpoint(float dt_s)
 		Eigen::Vector3f target_position = _waypoints[_waypoint_index];
 
 		// Construct a trajectory setpoint message
-		px4_msgs::msg::TrajectorySetpoint setpoint;
-		setpoint.timestamp = _node.now().nanoseconds() / 1000;
-		setpoint.position = {target_position.x(), target_position.y(),
-				     target_position.z()
-				    };
-		setpoint.velocity = {NAN, NAN, NAN};
-		setpoint.acceleration = {NAN, NAN, NAN};
-		setpoint.jerk = {NAN, NAN, NAN};
-		setpoint.yaw = NAN;
-		setpoint.yawspeed = NAN;
+		px4_ros2::TrajectorySetpoint setpoint = {};
+
+		setpoint.position_ned_m_x = target_position.x();
+		setpoint.position_ned_m_y = target_position.y();
+		setpoint.position_ned_m_z = target_position.z();
 
 		_trajectory_setpoint->update(setpoint);
 
@@ -78,21 +73,17 @@ void CustomMode::updateSetpoint(float dt_s)
 	}
 
 	case State::ReturnToHome: {
-		// Set the target position to the X,Y position where the drone was armed
+
 		Eigen::Vector3f target_position = {
-			0.0f, 0.0f, _vehicle_local_position->positionNed().z()
+			0.0f,
+			0.0f,
+			_vehicle_local_position->positionNed().z()
 		};
-		// Construct a trajectory setpoint message
-		px4_msgs::msg::TrajectorySetpoint setpoint;
-		setpoint.timestamp = _node.now().nanoseconds() / 1000;
-		setpoint.position = {target_position.x(), target_position.y(),
-				     target_position.z()
-				    };
-		setpoint.velocity = {NAN, NAN, NAN};
-		setpoint.acceleration = {NAN, NAN, NAN};
-		setpoint.jerk = {NAN, NAN, NAN};
-		setpoint.yaw = NAN;
-		setpoint.yawspeed = NAN;
+
+		px4_ros2::TrajectorySetpoint setpoint = {};
+		setpoint.position_ned_m_x = target_position.x();
+		setpoint.position_ned_m_y = target_position.y();
+		setpoint.position_ned_m_z = target_position.z();
 
 		_trajectory_setpoint->update(setpoint);
 
@@ -104,15 +95,11 @@ void CustomMode::updateSetpoint(float dt_s)
 	}
 
 	case State::Descend: {
-		// Construct a trajectory setpoint message
-		px4_msgs::msg::TrajectorySetpoint setpoint;
-		setpoint.timestamp = _node.now().nanoseconds() / 1000;
-		setpoint.position = {0.0, 0.0, NAN};
-		setpoint.velocity = {NAN, NAN, 0.35};
-		setpoint.acceleration = {NAN, NAN, NAN};
-		setpoint.jerk = {NAN, NAN, NAN};
-		setpoint.yaw = NAN;
-		setpoint.yawspeed = NAN;
+
+		px4_ros2::TrajectorySetpoint setpoint = {};
+		setpoint.position_ned_m_x = 0;
+		setpoint.position_ned_m_y = 0;
+		setpoint.velocity_ned_m_s_z = 0.35;
 
 		_trajectory_setpoint->update(setpoint);
 
